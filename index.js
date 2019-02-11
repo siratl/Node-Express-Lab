@@ -58,11 +58,30 @@ server.post('/api/posts', (req, res) => {
       res.status(201).json({ success: true, post });
     })
     .catch(err => {
-      res
-        .status(500)
-        .json({
-          error: 'There was an error while saving the post to the database.',
-        });
+      res.status(500).json({
+        error: 'There was an error while saving the post to the database.',
+      });
+    });
+});
+
+//************************** DELETE SPECIFIC POST *********************/
+server.delete('/api/posts/:id', (req, res) => {
+  const postId = req.params.id;
+  db.remove(postId)
+    .then(deleted => {
+      if (!deleted) {
+        res
+          .status(404)
+          .json({
+            success: false,
+            message: 'The post with the specified ID does not exist.',
+          });
+      } else {
+        res.status(204).json( deleted );
+      }
+    })
+    .catch(err => {
+      res.status(500).json({ error: 'The post could not be removed' });
     });
 });
 

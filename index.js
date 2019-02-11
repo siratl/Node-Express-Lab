@@ -12,6 +12,7 @@ server.get('/', (req, res) => {
   res.send('<h1>Server Running...</h1>');
 });
 
+//************************** GET ALL POSTS *************************/
 server.get('/api/posts', (req, res) => {
   db.find()
     .then(posts => {
@@ -19,6 +20,49 @@ server.get('/api/posts', (req, res) => {
     })
     .catch(err => {
       res.status(err.code).json({ success: false, message: err.message });
+    });
+});
+
+//************************** GET SPECIFIC POST *********************/
+server.get('/api/posts/:id', (req, res) => {
+  db.findById(req.params.id)
+    .then(post => {
+      if (post.length > 0) {
+        res.status(200).json({ success: true, post });
+      } else {
+        res.status(404).json({
+          success: false,
+          message: 'The post with the specified ID does not exist.',
+        });
+      }
+    })
+    .catch(err => {
+      res
+        .status(500)
+        .json({ error: 'The post information could not be retrieved.' });
+    });
+});
+
+//************************** CREATE NEW POST *********************/
+server.post('/api/posts', (req, res) => {
+  const { title, contents } = req.body;
+  const newPost = { title, contents };
+
+  if (!title || !contents) {
+    return res.status(400).json({
+      errorMessage: 'Please provide title and contents for the post.',
+    });
+  }
+  db.insert(newPost)
+    .then(post => {
+      res.status(201).json({ success: true, post });
+    })
+    .catch(err => {
+      res
+        .status(500)
+        .json({
+          error: 'There was an error while saving the post to the database.',
+        });
     });
 });
 

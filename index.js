@@ -1,11 +1,15 @@
 // import your node modules
 const express = require('express');
+
+const cors = require('cors');
+
 const port = 3333;
 const db = require('./data/db.js');
 
 // add your server code starting here
 const server = express();
 
+server.use(cors());
 server.use(express.json());
 
 server.get('/', (req, res) => {
@@ -55,7 +59,7 @@ server.post('/api/posts', (req, res) => {
   }
   db.insert(newPost)
     .then(post => {
-      res.status(201).json({ success: true, post });
+      res.status(201).json({ success: true, newPost, post });
     })
     .catch(err => {
       res.status(500).json({
@@ -70,18 +74,50 @@ server.delete('/api/posts/:id', (req, res) => {
   db.remove(postId)
     .then(deleted => {
       if (!deleted) {
-        res
-          .status(404)
-          .json({
-            success: false,
-            message: 'The post with the specified ID does not exist.',
-          });
+        res.status(404).json({
+          success: false,
+          message: 'The post with the specified ID does not exist.',
+        });
       } else {
-        res.status(204).json( deleted );
+        res
+          .status(200)
+          .json({ success: true, message: 'Post deleted!', deleted })
+          .end();
       }
     })
     .catch(err => {
       res.status(500).json({ error: 'The post could not be removed' });
+    });
+});
+
+//************************** UPDATES POST *********************/
+server.put('/api/posts/:id', (req, res) => {
+  const postId = req.params.id;
+  const { title, contents } = req.body;
+  const changes = { title, contents };
+
+  db.update(postId, changes)
+    .then(updatedPost => {
+      if (!updatedPost) {
+        res
+          .status(404)
+          .json({ message: 'The post with the specified ID does not exist.' });
+      } else if (!req.body) {
+        res
+          .status(400)
+          .json({
+            errorMessage: 'Please provide title and contents for the post.',
+          });
+      } else {
+        res
+          .status(200)
+          .json({ success: true, message: 'Post Updated', changes });
+      }
+    })
+    .catch(err => {
+      res
+        .status(500)
+        .json({ error: 'The post information could not be modified.' });
     });
 });
 
